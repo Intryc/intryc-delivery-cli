@@ -1,0 +1,37 @@
+{
+  "base_commit": "f1b05b23dd4f91abdbd36686e44d62f90ed10e86",
+  "includes_uncommitted_review_fixes": false,
+  "snapshot_date": "2026-09-07",
+  "files": [
+    {
+      "local": "src/intryc_delivery/contract/semantic.py",
+      "source": "bifrost/etl/extractors/intryc/contracts.py",
+      "sha256": "382be6f785a1aaf29878901ebd07896271e2d63245739052136a0957fa077b47"
+    },
+    {
+      "local": "src/intryc_delivery/contract/json_payload.py",
+      "source": "bifrost/etl/extractors/intryc/json_document.py",
+      "sha256": "f56fa021bbc925e282fb82dfd9fc46ff212d93c967153786cf2cf50179b7bae6"
+    },
+    {
+      "local": "src/intryc_delivery/contract/schemas/ticket-1.0.schema.json",
+      "source": "docs/schemas/ticket-1.0.schema.json",
+      "sha256": "70526b1cc6532afc7475a5c744862d91cec518cb3159e5551cf1b16b92782ac2"
+    },
+    {
+      "local": "src/intryc_delivery/contract/schemas/ticket-delivery-1.0.schema.json",
+      "source": "docs/schemas/ticket-delivery-1.0.schema.json",
+      "sha256": "988e0a731867feb5d1be8fe26e220d574e84f4154bebbb95419b4effcfe89156"
+    }
+  ],
+  "extracted_functions": {
+    "bifrost/etl/extractors/intryc/s3_source.py": [
+      "detect_content_type",
+      "content_type_matches"
+    ],
+    "bifrost/etl/extractors/intryc/extractor.py": [
+      "CONTENT_TYPE_EXTENSIONS",
+      "_filename_matches_content_type"
+    ]
+  }
+}

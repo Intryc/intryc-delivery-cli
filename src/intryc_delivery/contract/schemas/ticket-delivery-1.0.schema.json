@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://docs.intryc.com/schemas/ticket-delivery-1.0.schema.json",
+  "title": "Intryc ticket delivery manifest 1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "delivery_id", "created_at", "mode", "counts", "tickets"],
+  "properties": {
+    "schema_version": {"const": "ticket-delivery/1.0"},
+    "delivery_id": {"type": "string", "minLength": 1, "pattern": "\\S", "maxLength": 255, "$ref": "#/$defs/pathSegment"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "mode": {"const": "create_only"},
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "assignee_source_user_id": {"type": "string", "minLength": 1, "pattern": "\\S", "maxLength": 512}
+      }
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tickets", "assets"],
+      "properties": {
+        "tickets": {"type": "integer", "minimum": 0, "maximum": 10000},
+        "assets": {"type": "integer", "minimum": 0, "maximum": 50000}
+      }
+    },
+    "tickets": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source_ticket_id", "path", "bytes", "sha256"],
+        "properties": {
+          "source_ticket_id": {"type": "string", "minLength": 1, "pattern": "\\S", "maxLength": 512},
+          "path": {"$ref": "#/$defs/ticketPath"},
+          "bytes": {"type": "integer", "minimum": 0, "maximum": 10485760},
+          "sha256": {"$ref": "#/$defs/sha256"}
+        }
+      }
+    },
+    "assets": {
+      "type": "array",
+      "maxItems": 50000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "bytes", "sha256", "content_type"],
+        "properties": {
+          "path": {"$ref": "#/$defs/assetPath"},
+          "bytes": {"type": "integer", "minimum": 0, "maximum": 1073741824},
+          "sha256": {"$ref": "#/$defs/sha256"},
+          "content_type": {"$ref": "ticket-1.0.schema.json#/$defs/contentType"}
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"content_type": {"$ref": "ticket-1.0.schema.json#/$defs/attachmentContentType"}}},
+            "then": {"properties": {"bytes": {"maximum": 26214400}}}
+          }
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "pathSegment": {
+      "pattern": "^(?!\\.\\.?$)(?!s3://)[^/\\\\*?\\[\\]\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+    },
+    "ticketPath": {
+      "type": "string",
+      "pattern": "^ticket_details/(?:(?!\\.\\.?(?:/|$))[^/\\\\*?\\[\\]\\u0000-\\u001f\\u007f]+/)*(?!\\.\\.?(?:/|$))[^/\\\\*?\\[\\]\\u0000-\\u001f\\u007f]+\\.json(?![\\s\\S])"
+    },
+    "assetPath": {
+      "type": "string",
+      "pattern": "^assets/(?:(?!\\.\\.?(?:/|$))[^/\\\\*?\\[\\]\\u0000-\\u001f\\u007f]+/)*(?!\\.\\.?(?:/|$))[^/\\\\*?\\[\\]\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}(?![\\s\\S])"
+    }
+  }
+}

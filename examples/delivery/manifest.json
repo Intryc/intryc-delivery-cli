@@ -1,0 +1,44 @@
+{
+  "schema_version": "ticket-delivery/1.0",
+  "delivery_id": "example-delivery-1",
+  "created_at": "2026-08-25T09:30:00Z",
+  "mode": "create_only",
+  "counts": {
+    "tickets": 3,
+    "assets": 2
+  },
+  "tickets": [
+    {
+      "source_ticket_id": "example-written-1",
+      "path": "ticket_details/written.json",
+      "bytes": 994,
+      "sha256": "a38048073efbf672d4364fb056ef66b2b0984398f3baddc711a54c4315fa5f32"
+    },
+    {
+      "source_ticket_id": "example-call-1",
+      "path": "ticket_details/call.json",
+      "bytes": 969,
+      "sha256": "d54aa93ced894ebd07a60ed98f7b1c15a0ef5274e6a5853c540a3c4d315e5218"
+    },
+    {
+      "source_ticket_id": "example-attachment-1",
+      "path": "ticket_details/attachment.json",
+      "bytes": 1961,
+      "sha256": "0474849642704dcdb0e753b6f4b0dbec3fa56d98c04c6db2deda8a17da329f6d"
+    }
+  ],
+  "assets": [
+    {
+      "path": "assets/attachments/example.txt",
+      "content_type": "text/plain",
+      "bytes": 48,
+      "sha256": "346511d2e4f889dad1cf657a8dccdef959a9728db120dc3b4c506392546ad8c1"
+    },
+    {
+      "path": "assets/calls/example.wav",
+      "content_type": "audio/wav",
+      "bytes": 16044,
+      "sha256": "56d4af65701c26df20bd4021eda95b6e830348ce3a746086079fe89285548dc9"
+    }
+  ]
+}
