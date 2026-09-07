@@ -9,19 +9,20 @@ and AWS credentials for its configured bucket and prefix.
 
 ## Install
 
-Until the first PyPI release, install from this official repository with
+Install the official [PyPI package](https://pypi.org/project/intryc-delivery/) with
 [uv](https://docs.astral.sh/uv/getting-started/installation/):
 
 ```sh
-uv tool install git+https://github.com/Intryc/intryc-delivery-cli.git
+uv tool install intryc-delivery
 intryc-delivery --version
 intryc-delivery --help
 ```
 
-If Intryc provided you with a release wheel, install that file instead:
+Alternatively, use `pipx install intryc-delivery`. To upgrade an installation made
+with uv:
 
 ```sh
-uv tool install /path/to/intryc_delivery-0.1.0-py3-none-any.whl
+uv tool upgrade intryc-delivery
 ```
 
 ## Prepare your files
