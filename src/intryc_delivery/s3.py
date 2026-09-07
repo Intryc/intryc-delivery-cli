@@ -9,7 +9,6 @@ from uuid import uuid4
 
 import boto3
 from boto3.exceptions import Boto3Error
-from boto3.s3.transfer import TransferConfig
 from botocore.config import Config
 from botocore.exceptions import (
     BotoCoreError,
@@ -202,6 +201,61 @@ class S3Publisher:
             list(pool.map(verify_one, delivery.objects))
         self.progress("Remote inventory and file checksums verified.")
 
+    def _create_object(self, delivery: Delivery, item: LocalObject, key: str) -> None:
+        part_bytes = 8 * 1024 * 1024
+        metadata = {
+            "sha256": item.sha256,
+            "delivery-id-base64": b64encode(delivery.delivery_id.encode("utf-8")).decode("ascii"),
+        }
+        with regular_file(delivery.root / item.path) as stream:
+            if item.bytes < part_bytes:
+                self.client.put_object(
+                    Bucket=self.bucket,
+                    Key=key,
+                    Body=stream,
+                    ContentType=item.content_type,
+                    Metadata=metadata,
+                    IfNoneMatch="*",
+                )
+                return
+            upload_id = self.client.create_multipart_upload(
+                Bucket=self.bucket,
+                Key=key,
+                ContentType=item.content_type,
+                Metadata=metadata,
+            )["UploadId"]
+            try:
+                parts = []
+                while chunk := stream.read(part_bytes):
+                    number = len(parts) + 1
+                    result = self.client.upload_part(
+                        Bucket=self.bucket,
+                        Key=key,
+                        UploadId=upload_id,
+                        PartNumber=number,
+                        Body=chunk,
+                    )
+                    parts.append({"PartNumber": number, "ETag": result["ETag"]})
+                self.client.complete_multipart_upload(
+                    Bucket=self.bucket,
+                    Key=key,
+                    UploadId=upload_id,
+                    MultipartUpload={"Parts": parts},
+                    IfNoneMatch="*",
+                )
+            except BaseException:
+                try:
+                    self.client.abort_multipart_upload(
+                        Bucket=self.bucket,
+                        Key=key,
+                        UploadId=upload_id,
+                    )
+                except (BotoCoreError, ClientError):
+                    self.progress(
+                        "Multipart cleanup failed; bucket lifecycle cleanup may be needed."
+                    )
+                raise
+
     def upload(self, delivery: Delivery) -> bool:
         self.progress(f"Uploading or resuming {len(delivery.objects)} files.")
         with aws_errors():
@@ -227,27 +281,23 @@ class S3Publisher:
                         "A ready marker appeared while uploading; stop all other writers.",
                         exit_code=ExitCode.TRANSPORT,
                     )
-                with regular_file(delivery.root / item.path) as stream:
-                    self.client.upload_fileobj(
-                        stream,
-                        self.bucket,
-                        key,
-                        ExtraArgs={
-                            "ContentType": item.content_type,
-                            "Metadata": {
-                                "sha256": item.sha256,
-                                "delivery-id-base64": b64encode(
-                                    delivery.delivery_id.encode("utf-8")
-                                ).decode("ascii"),
-                            },
-                        },
-                        Config=TransferConfig(
-                            multipart_threshold=8 * 1024 * 1024,
-                            multipart_chunksize=8 * 1024 * 1024,
-                            max_concurrency=1,
-                            use_threads=False,
-                        ),
-                    )
+                try:
+                    self._create_object(delivery, item, key)
+                except ClientError as exc:
+                    if exc.response.get("Error", {}).get("Code") not in {
+                        "412",
+                        "PreconditionFailed",
+                    }:
+                        raise
+                    # Another writer (or a retried successful request) won the
+                    # conditional write. Only identical contents are replay-safe.
+                    if not self._matches(key, item):
+                        fail(
+                            "REMOTE_OBJECT_CONFLICT",
+                            "An existing object differs. Use a fresh delivery ID; existing objects are never overwritten.",
+                            path=item.path,
+                            exit_code=ExitCode.TRANSPORT,
+                        )
 
             with ThreadPoolExecutor(max_workers=self.settings.concurrency) as pool:
                 list(

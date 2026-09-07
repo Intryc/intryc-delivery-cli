@@ -6,7 +6,7 @@ from io import BytesIO
 import boto3
 import pytest
 from botocore.response import StreamingBody
-from botocore.stub import Stubber
+from botocore.stub import ANY, Stubber
 
 from intryc_delivery.config import Settings
 from intryc_delivery.errors import DeliveryError, ExitCode
@@ -16,8 +16,8 @@ from intryc_delivery.validation import Delivery, LocalObject
 
 @pytest.mark.parametrize("fail_part", [False, True])
 @pytest.mark.parametrize("delivery_id", ["multipart", "παράδοση"])
-def test_real_boto_transfer_uses_multipart_and_reads_back(tmp_path, fail_part, delivery_id):
-    # Actual boto3 transfer orchestration against stubbed HTTP operations.
+def test_conditional_multipart_upload_reads_back(tmp_path, fail_part, delivery_id):
+    # Actual SDK operations, including the atomic multipart completion condition.
     client = boto3.client(
         "s3", region_name="us-east-1", aws_access_key_id="testing", aws_secret_access_key="testing"
     )
@@ -64,7 +64,17 @@ def test_real_boto_transfer_uses_multipart_and_reads_back(tmp_path, fail_part, d
             return
         stub.add_response("upload_part", {"ETag": '"part-1"'})
         stub.add_response("upload_part", {"ETag": '"part-2"'})
-        stub.add_response("complete_multipart_upload", {"ETag": '"multipart-etag"'})
+        stub.add_response(
+            "complete_multipart_upload",
+            {"ETag": '"multipart-etag"'},
+            {
+                "Bucket": "example-bucket",
+                "Key": key,
+                "UploadId": "upload-1",
+                "MultipartUpload": ANY,
+                "IfNoneMatch": "*",
+            },
+        )
         stub.add_response(
             "list_objects_v2",
             {
@@ -78,4 +88,52 @@ def test_real_boto_transfer_uses_multipart_and_reads_back(tmp_path, fail_part, d
         )
         publisher = S3Publisher(Settings(bucket="example-bucket", prefix="incoming"), client=client)
         assert publisher.upload(delivery) is False
+        stub.assert_no_pending_responses()
+
+
+@pytest.mark.parametrize("code", ["PreconditionFailed", "ConditionalRequestConflict"])
+def test_failed_conditional_multipart_completion_aborts_without_overwriting(tmp_path, code):
+    from botocore.exceptions import ClientError
+
+    client = boto3.client(
+        "s3", region_name="us-east-1", aws_access_key_id="testing", aws_secret_access_key="testing"
+    )
+    content = b"x" * (8 * 1024 * 1024)
+    (tmp_path / "media.wav").write_bytes(content)
+    item = LocalObject(
+        path="media.wav",
+        bytes=len(content),
+        sha256=hashlib.sha256(content).hexdigest(),
+        content_type="audio/wav",
+    )
+    delivery = Delivery(root=tmp_path, delivery_id="race", manifest={}, objects=[item])
+    target = S3Publisher(Settings(bucket="example-bucket", prefix="incoming"), client=client)
+    key = "incoming/deliveries/race/media.wav"
+    with Stubber(client) as stub:
+        stub.add_response("create_multipart_upload", {"UploadId": "upload-1"})
+        stub.add_response("upload_part", {"ETag": '"part-1"'})
+        stub.add_client_error(
+            "complete_multipart_upload",
+            service_error_code=code,
+            http_status_code=412 if code == "PreconditionFailed" else 409,
+            expected_params={
+                "Bucket": "example-bucket",
+                "Key": key,
+                "UploadId": "upload-1",
+                "MultipartUpload": {"Parts": [{"PartNumber": 1, "ETag": '"part-1"'}]},
+                "IfNoneMatch": "*",
+            },
+        )
+        stub.add_response(
+            "abort_multipart_upload",
+            {},
+            {
+                "Bucket": "example-bucket",
+                "Key": key,
+                "UploadId": "upload-1",
+            },
+        )
+        with pytest.raises(ClientError) as exc:
+            target._create_object(delivery, item, key)
+        assert exc.value.response["Error"]["Code"] == code
         stub.assert_no_pending_responses()

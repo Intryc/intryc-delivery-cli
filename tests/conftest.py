@@ -81,13 +81,28 @@ class FakeS3:
             content = b"x" * len(content)
         self.objects[key] = {"Body": content, **copy.deepcopy(ExtraArgs)}
 
-    def put_object(self, *, Bucket, Key, Body, IfNoneMatch, ContentType="application/octet-stream"):
+    def put_object(
+        self,
+        *,
+        Bucket,
+        Key,
+        Body,
+        IfNoneMatch,
+        ContentType="application/octet-stream",
+        Metadata=None,
+    ):
         assert IfNoneMatch == "*"
-        self.events.append(("put", Key))
-        if Key in self.objects or self.marker_race:
+        is_upload = Metadata is not None
+        self.events.append(("upload" if is_upload else "put", Key))
+        if self.fail_upload and is_upload:
+            raise ClientError({"Error": {"Code": "AccessDenied"}}, "PutObject")
+        if Key in self.objects or (self.marker_race and not is_upload):
             self.objects.setdefault(Key, {"Body": b"", "ContentType": ContentType})
             raise ClientError({"Error": {"Code": "PreconditionFailed"}}, "PutObject")
-        self.objects[Key] = {"Body": Body, "ContentType": ContentType}
+        content = Body.read() if hasattr(Body, "read") else Body
+        if self.corrupt_upload and is_upload:
+            content = b"x" * len(content)
+        self.objects[Key] = {"Body": content, "ContentType": ContentType}
 
 
 @pytest.fixture

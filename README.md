@@ -161,7 +161,8 @@ never changes permissions, requires deletion or bypasses verification.
   Concurrent processes on the same machine are rejected; separate hosts must
   coordinate or use different delivery IDs.
 - If an upload stops before publication, rerun the same command with unchanged
-  local files. Missing or mismatched unpublished objects are resumed.
+  local files. Missing objects are uploaded; existing objects are never overwritten.
+  If an existing object differs, use a fresh delivery ID.
 - A published delivery is immutable. Repeating an identical delivery verifies
   its remote contents and reports `already_published`; conflicting reuse fails.
 - Correct rejected content under a new delivery ID. Keep original source IDs for

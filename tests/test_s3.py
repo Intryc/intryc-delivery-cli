@@ -178,3 +178,40 @@ def test_doctor_checks_identity_region_listing_and_optional_probe(s3, monkeypatc
     with pytest.raises(DeliveryError) as exc:
         target.doctor()
     assert exc.value.issues[0].code == "REGION_MISMATCH"
+
+
+@pytest.mark.parametrize("same_content", [False, True])
+def test_object_write_cannot_overwrite_a_concurrent_publication(
+    root, s3, monkeypatch, same_content
+):
+    delivery = validate(root)
+    # Isolate one object so the second writer publishes exactly at its write boundary.
+    delivery.objects = delivery.objects[:1]
+    item = delivery.objects[0]
+    key = f"incoming/deliveries/{delivery.delivery_id}/{item.path}"
+    winning_content = (root / item.path).read_bytes() if same_content else b"other-writer"
+    marker = f"incoming/_ready/{delivery.delivery_id}"
+    original_put = s3.put_object
+    original_upload = s3.upload_fileobj
+
+    def publish_winner():
+        s3.objects[key] = {"Body": winning_content, "ContentType": item.content_type}
+        s3.objects[marker] = {"Body": b"", "ContentType": "application/octet-stream"}
+
+    def race_put(**kwargs):
+        publish_winner()
+        return original_put(**kwargs)
+
+    def race_upload(*args, **kwargs):
+        publish_winner()
+        return original_upload(*args, **kwargs)
+
+    monkeypatch.setattr(s3, "put_object", race_put)
+    monkeypatch.setattr(s3, "upload_fileobj", race_upload)
+    if same_content:
+        publisher(s3).upload(delivery)
+    else:
+        with pytest.raises(DeliveryError):
+            publisher(s3).upload(delivery)
+    assert s3.objects[key]["Body"] == winning_content
+    assert s3.objects[marker]["Body"] == b""
