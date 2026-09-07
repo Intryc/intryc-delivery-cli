@@ -1,0 +1,55 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "intryc-delivery"
+version = "0.1.0"
+description = "Validate and publish Intryc ticket deliveries to S3"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{name = "Intryc"}]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Operating System :: MacOS",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+]
+requires-python = ">=3.11"
+dependencies = ["boto3>=1.36,<2", "click>=8.1,<9", "jsonschema>=4.23,<5", "pydantic>=2.10,<3", "referencing>=0.36,<1"]
+
+[project.urls]
+Homepage = "https://github.com/Intryc/intryc-delivery-cli"
+Documentation = "https://github.com/Intryc/intryc-delivery-cli#readme"
+Repository = "https://github.com/Intryc/intryc-delivery-cli"
+Issues = "https://github.com/Intryc/intryc-delivery-cli/issues"
+
+[project.scripts]
+intryc-delivery = "intryc_delivery.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8,<10",
+    "ruff>=0.11,<1",
+    "twine>=6.2,<7",
+]
+
+[tool.hatch.build.targets.wheel]
+core-metadata-version = "2.4"
+packages = ["src/intryc_delivery"]
+
+[tool.hatch.build.targets.sdist]
+core-metadata-version = "2.4"
+include = ["/src/intryc_delivery", "/tests", "/examples", "/README.md", "/pyproject.toml", "/ruff.toml", "/contract-version.json", "/uv.lock", "/LICENSE", "/scripts"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py311"

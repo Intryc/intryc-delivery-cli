@@ -1,0 +1,24 @@
+{
+  "contract_versions": [
+    "ticket/1.0",
+    "ticket-delivery/1.0"
+  ],
+  "files": [
+    {
+      "path": "src/intryc_delivery/contract/semantic.py",
+      "sha256": "382be6f785a1aaf29878901ebd07896271e2d63245739052136a0957fa077b47"
+    },
+    {
+      "path": "src/intryc_delivery/contract/json_payload.py",
+      "sha256": "f56fa021bbc925e282fb82dfd9fc46ff212d93c967153786cf2cf50179b7bae6"
+    },
+    {
+      "path": "src/intryc_delivery/contract/schemas/ticket-1.0.schema.json",
+      "sha256": "9389b3be4da3b58a81276d874b36ba8eee4876d6d2ae15ba604b2703a0673944"
+    },
+    {
+      "path": "src/intryc_delivery/contract/schemas/ticket-delivery-1.0.schema.json",
+      "sha256": "0725780d8af194c74da67d1576b0ac92d0daabcc442050389b0192e0bd08c587"
+    }
+  ]
+}
