@@ -37,7 +37,7 @@ intryc-delivery = "intryc_delivery.cli:main"
 dev = [
     "pytest>=8,<10",
     "ruff>=0.11,<1",
-    "twine>=6.2,<7",
+    "twine>=6.2,<8",
 ]
 
 [tool.hatch.build.targets.wheel]
