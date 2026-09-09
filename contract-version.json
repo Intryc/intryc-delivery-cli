@@ -14,7 +14,7 @@
     },
     {
       "path": "src/intryc_delivery/contract/schemas/ticket-1.0.schema.json",
-      "sha256": "9389b3be4da3b58a81276d874b36ba8eee4876d6d2ae15ba604b2703a0673944"
+      "sha256": "3fa1ebcffbaac6e372182083a31c3a131d8036d3715954e092f0b5b288092a0f"
     },
     {
       "path": "src/intryc_delivery/contract/schemas/ticket-delivery-1.0.schema.json",

@@ -68,7 +68,7 @@
       "properties": {
         "source_user_id": {"$ref": "#/$defs/userReference"},
         "name": {"type": "string", "minLength": 1, "pattern": "\\S", "maxLength": 1024},
-        "email": {"type": "string", "format": "email"},
+        "email": {"type": "string", "format": "email", "pattern": "^\\s*[^@\\s]+@[^@\\s]+\\.[^@\\s]+\\s*$", "description": "Use a basic name@domain.tld email address. Surrounding whitespace is trimmed and letters are lowercased during import."},
         "role": {"$ref": "#/$defs/role"},
         "active": {"type": "boolean"},
         "created_at": {"type": "string", "format": "date-time"},
