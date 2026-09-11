@@ -19,7 +19,7 @@
     "tags": {
       "type": "array",
       "uniqueItems": true,
-      "items": {"type": "string", "minLength": 1, "pattern": "\\S"}
+      "items": {"type": "string", "minLength": 1, "maxLength": 255, "pattern": "\\S"}
     },
     "custom_fields": {"$ref": "#/$defs/scalarMap"},
     "users": {
@@ -55,7 +55,7 @@
     "scalar": {"type": ["string", "number", "boolean", "null"]},
     "scalarMap": {
       "type": "object",
-      "propertyNames": {"type": "string", "minLength": 1, "pattern": "\\S"},
+      "propertyNames": {"type": "string", "minLength": 1, "maxLength": 512, "pattern": "\\S"},
       "additionalProperties": {"$ref": "#/$defs/scalar"}
     },
     "flexibleMap": {"type": "object", "additionalProperties": true},
@@ -68,7 +68,7 @@
       "properties": {
         "source_user_id": {"$ref": "#/$defs/userReference"},
         "name": {"type": "string", "minLength": 1, "pattern": "\\S", "maxLength": 1024},
-        "email": {"type": "string", "format": "email", "pattern": "^\\s*[^@\\s]+@[^@\\s]+\\.[^@\\s]+\\s*$", "description": "Use a basic name@domain.tld email address. Surrounding whitespace is trimmed and letters are lowercased during import."},
+        "email": {"type": "string", "maxLength": 254, "format": "email", "pattern": "^\\s*[^@\\s]+@[^@\\s]+\\.[^@\\s]+\\s*$", "description": "Use a basic name@domain.tld email address. Surrounding whitespace is trimmed and letters are lowercased during import."},
         "role": {"$ref": "#/$defs/role"},
         "active": {"type": "boolean"},
         "created_at": {"type": "string", "format": "date-time"},
@@ -233,6 +233,10 @@
     },
     "fieldEvent": {
       "allOf": [
+        {
+          "if": {"properties": {"field_name": {"const": "status"}}, "required": ["field_name"]},
+          "then": {"properties": {"value": {"maxLength": 512}, "previous_value": {"maxLength": 512}}}
+        },
         {"$ref": "#/$defs/eventBase"},
         {
           "type": "object",
@@ -261,8 +265,8 @@
             "created_at": true,
             "actor_source_user_id": true,
             "type": {"enum": ["change", "update", "add", "remove"]},
-            "previous_value": {"type": "array", "items": {"type": "string", "minLength": 1, "pattern": "\\S"}},
-            "value": {"type": "array", "items": {"type": "string", "minLength": 1, "pattern": "\\S"}}
+            "previous_value": {"type": "array", "items": {"type": "string", "minLength": 1, "maxLength": 255, "pattern": "\\S"}},
+            "value": {"type": "array", "items": {"type": "string", "minLength": 1, "maxLength": 255, "pattern": "\\S"}}
           }
         }
       ]
