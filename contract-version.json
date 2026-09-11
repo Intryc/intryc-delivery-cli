@@ -6,7 +6,7 @@
   "files": [
     {
       "path": "src/intryc_delivery/contract/semantic.py",
-      "sha256": "382be6f785a1aaf29878901ebd07896271e2d63245739052136a0957fa077b47"
+      "sha256": "815b03aa0c8301fa909ea6ffb9c3284a1c09903550251ddafe0d9b05f753b485"
     },
     {
       "path": "src/intryc_delivery/contract/json_payload.py",
@@ -14,7 +14,7 @@
     },
     {
       "path": "src/intryc_delivery/contract/schemas/ticket-1.0.schema.json",
-      "sha256": "3fa1ebcffbaac6e372182083a31c3a131d8036d3715954e092f0b5b288092a0f"
+      "sha256": "fa898d9648df9054d0a565ea4ffa71aa9eafdaf2a11b2c7657964cb6d20da0eb"
     },
     {
       "path": "src/intryc_delivery/contract/schemas/ticket-delivery-1.0.schema.json",

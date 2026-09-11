@@ -941,13 +941,13 @@ def _validate_user(
             )
         )
     if email is not None and (
-        not isinstance(email, str) or not EMAIL_PATTERN.fullmatch(email.strip())
+        not isinstance(email, str) or len(email) > 254 or not EMAIL_PATTERN.fullmatch(email.strip())
     ):
         issues.append(
             _issue(
                 ErrorScope.TICKET,
                 "INVALID_USER_EMAIL",
-                "email must be valid.",
+                "email must be valid and at most 254 characters.",
                 pointer=f"{pointer}/email",
                 ticket_id=ticket_id,
             )
@@ -1034,13 +1034,13 @@ def _validate_user(
         )
     custom_fields = value.get("custom_fields", {})
     if not isinstance(custom_fields, dict) or any(
-        not isinstance(key, str) or not key.strip() for key in custom_fields
+        not isinstance(key, str) or not key.strip() or len(key) > 512 for key in custom_fields
     ):
         issues.append(
             _issue(
                 ErrorScope.TICKET,
                 "INVALID_USER_CUSTOM_FIELDS",
-                "custom_fields must be an object with non-empty string keys.",
+                "custom_fields must be an object with non-empty string keys of at most 512 characters.",
                 pointer=f"{pointer}/custom_fields",
                 ticket_id=ticket_id,
             )
@@ -1384,13 +1384,13 @@ def parse_ticket(
 
     custom_fields = payload.get("custom_fields", {})
     if not isinstance(custom_fields, dict) or any(
-        not isinstance(key, str) or not key.strip() for key in custom_fields
+        not isinstance(key, str) or not key.strip() or len(key) > 512 for key in custom_fields
     ):
         issues.append(
             _issue(
                 ErrorScope.TICKET,
                 "INVALID_CUSTOM_FIELDS",
-                "custom_fields must be an object with non-empty string keys.",
+                "custom_fields must be an object with non-empty string keys of at most 512 characters.",
                 pointer="/custom_fields",
                 ticket_id=expected_source_ticket_id,
             )
@@ -1415,13 +1415,13 @@ def parse_ticket(
 
     tags = payload.get("tags", [])
     if not isinstance(tags, list) or any(
-        not isinstance(tag, str) or not tag.strip() for tag in tags
+        not isinstance(tag, str) or not tag.strip() or len(tag) > 255 for tag in tags
     ):
         issues.append(
             _issue(
                 ErrorScope.TICKET,
                 "INVALID_TAGS",
-                "tags must contain non-empty strings.",
+                "tags must contain non-empty strings of at most 255 characters.",
                 pointer="/tags",
                 ticket_id=expected_source_ticket_id,
             )
@@ -1893,7 +1893,7 @@ def _validate_events(
             if (
                 not isinstance(field_name, str)
                 or not field_name.strip()
-                or len(field_name.strip()) > 512
+                or len(field_name) > 512
             ):
                 issues.append(
                     _issue(
@@ -1916,17 +1916,27 @@ def _validate_events(
                             ticket_id=ticket_id,
                         )
                     )
+                if field_name == "status" and isinstance(field_value, str) and len(field_value) > 512:
+                    issues.append(
+                        _issue(
+                            ErrorScope.TICKET,
+                            "INVALID_FIELD_EVENT_VALUE",
+                            f"{key} for status must be at most 512 characters.",
+                            pointer=f"{item_pointer}/{key}",
+                            ticket_id=ticket_id,
+                        )
+                    )
         if tag_values:
             for key in ("value", "previous_value"):
                 tag_list = event.get(key, [])
                 if not isinstance(tag_list, list) or any(
-                    not isinstance(tag, str) or not tag.strip() for tag in tag_list
+                    not isinstance(tag, str) or not tag.strip() or len(tag) > 255 for tag in tag_list
                 ):
                     issues.append(
                         _issue(
                             ErrorScope.TICKET,
                             "INVALID_TAG_EVENT_VALUE",
-                            f"{key} must be an array of tag strings.",
+                            f"{key} must be an array of non-empty tag strings of at most 255 characters.",
                             pointer=f"{item_pointer}/{key}",
                             ticket_id=ticket_id,
                         )
