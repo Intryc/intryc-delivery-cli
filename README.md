@@ -76,6 +76,13 @@ assignee email with an active, eligible user in your Intryc workspace. Include
 all referenced users in each ticket's `users` list. The CLI does not create Intryc
 accounts or verify workspace eligibility.
 
+Tags must be non-empty strings of at most 255 characters. Ticket tags cannot
+contain duplicates. The same length limit applies to each tag in tag-event
+`value` and `previous_value`. User email strings may contain at most 254
+characters, including surrounding whitespace. Ticket and user custom-field keys
+are limited to 512 characters. In field events named `status`, string `value`
+and `previous_value` are also limited to 512 characters.
+
 [Complete examples](examples/delivery) show a written ticket, a call-only ticket
 and a ticket with an attachment. Their data is synthetic; the WAV contains one
 second of silence. Use a real recording when testing transcription.
